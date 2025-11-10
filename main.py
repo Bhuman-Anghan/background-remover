@@ -1,9 +1,8 @@
-import os
 from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from rembg import remove
-import requests
+import requests, os
 
 app = FastAPI()
 
@@ -14,12 +13,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def home():
-    return {"message": "✅ Background Remover API running!"}
+    # Simple HTML message to confirm app is live
+    return "<h2>✅ Background Remover API is running!</h2><p>POST /remove-bg to remove background</p>"
 
 @app.post("/remove-bg")
-async def remove_bg(file: UploadFile = File(None), image_url: str = Form(None)):
+async def remove_bg(
+    file: UploadFile = File(None),
+    image_url: str = Form(None)
+):
     try:
         if file:
             input_bytes = await file.read()
@@ -45,5 +48,5 @@ async def remove_bg(file: UploadFile = File(None), image_url: str = Form(None)):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8000))  # ✅ Render sets $PORT automatically
     uvicorn.run(app, host="0.0.0.0", port=port)
