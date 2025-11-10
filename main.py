@@ -1,12 +1,12 @@
+import os
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from rembg import remove
-import requests, os
+import requests
 
 app = FastAPI()
 
-# Allow all origins for frontend testing
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,19 +14,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ Root route for Render health check
 @app.get("/")
 def home():
     return {"message": "✅ Background Remover API running!"}
 
-
 @app.post("/remove-bg")
-async def remove_bg(
-    file: UploadFile = File(None),
-    image_url: str = Form(None)
-):
+async def remove_bg(file: UploadFile = File(None), image_url: str = Form(None)):
     try:
-        # Get image input
         if file:
             input_bytes = await file.read()
         elif image_url:
@@ -37,10 +31,8 @@ async def remove_bg(
         else:
             return JSONResponse({"error": "No image provided"}, status_code=400)
 
-        # Remove background
         result = remove(input_bytes)
 
-        # Save output (Render allows /tmp for file writing)
         output_path = "/tmp/output.png"
         with open(output_path, "wb") as f:
             f.write(result)
@@ -49,3 +41,9 @@ async def remove_bg(
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
