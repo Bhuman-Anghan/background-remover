@@ -13,11 +13,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# FIX 1: This route will now serve your index.html file
 @app.get("/", response_class=HTMLResponse)
-def home():
-    return "<h2>✅ Background Remover API is running!</h2><p>POST /remove-bg to remove background</p>"
+def get_home():
+    try:
+        # Assumes index.html is in the same directory as main.py
+        return FileResponse("index.html")
+    except FileNotFoundError:
+        return JSONResponse({"error": "index.html not found"}, status_code=500)
 
-@app.post("/remove-bg")
+# FIX 2: The path is changed to '/api/remove-bg' to match your JavaScript
+@app.post("/api/remove-bg")
 async def remove_bg(
     file: UploadFile = File(None),
     image_url: str = Form(None)
@@ -34,9 +40,12 @@ async def remove_bg(
             return JSONResponse({"error": "No image provided"}, status_code=400)
 
         result = remove(input_bytes)
+
+        # Use a writeable directory in Railway's container
         output_path = "/tmp/output.png"
         with open(output_path, "wb") as f:
             f.write(result)
+
         return FileResponse(output_path, media_type="image/png", filename="output.png")
 
     except Exception as e:
@@ -45,5 +54,5 @@ async def remove_bg(
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))  # Railway auto-sets this variable
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
