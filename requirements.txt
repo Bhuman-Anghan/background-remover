@@ -1,6 +1,0 @@
-fastapi
-uvicorn
-rembg
-pillow
-requests
-onnxruntime
