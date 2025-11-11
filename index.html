@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Background Remover</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+  <div class="bg-white shadow-lg rounded-2xl p-6 w-full max-w-md text-center">
+    <h1 class="text-2xl font-semibold mb-4">Background Remover</h1>
+
+    <!-- URL input form -->
+    <form id="uploadForm" class="flex flex-col space-y-3">
+      <input type="text" id="urlInput" placeholder="Paste image URL..." 
+             class="border rounded p-2 text-sm focus:ring-2 focus:ring-blue-400" required>
+      <button type="submit" 
+              class="bg-blue-600 text-white rounded p-2 hover:bg-blue-700 transition">
+        Remove Background
+      </button>
+    </form>
+
+    <!-- Result -->
+    <div id="preview" class="mt-6 hidden">
+      <h2 class="text-lg font-medium mb-2">Result</h2>
+      <img id="afterImg" class="max-w-xs rounded shadow mx-auto" alt="Background removed image">
+    </div>
+
+    <p id="status" class="text-sm text-gray-600 mt-4"></p>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const urlInput = document.getElementById('urlInput');
+    const afterImg = document.getElementById('afterImg');
+    const preview = document.getElementById('preview');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      status.textContent = "Processing...";
+      preview.classList.add("hidden");
+
+      const imageUrl = urlInput.value.trim();
+      if (!imageUrl) {
+        status.textContent = "❌ Please enter an image URL.";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("image_url", imageUrl);
+
+      try {
+        const res = await fetch("/api/remove-bg", {
+          method: "POST",
+          body: formData
+        });
+
+
+        if (!res.ok) {
+          const err = await res.json();
+          status.textContent = "Error: " + (err.error || "Unknown error");
+          return;
+        }
+
+        const blob = await res.blob();
+        afterImg.src = URL.createObjectURL(blob);
+        preview.classList.remove("hidden");
+        status.textContent = "✅ Background removed successfully!";
+      } catch (err) {
+        status.textContent = "❌ " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
