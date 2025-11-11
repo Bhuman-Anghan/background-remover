@@ -15,10 +15,13 @@ app.add_middleware(
 
 @app.get("/", response_class=HTMLResponse)
 def home():
-    return "<h2>✅ Background Remover API is running!</h2><p>POST /remove-bg to remove background.</p>"
+    return "<h2>✅ Background Remover API is running!</h2><p>POST /remove-bg to remove background</p>"
 
 @app.post("/remove-bg")
-async def remove_bg(file: UploadFile = File(None), image_url: str = Form(None)):
+async def remove_bg(
+    file: UploadFile = File(None),
+    image_url: str = Form(None)
+):
     try:
         if file:
             input_bytes = await file.read()
@@ -31,17 +34,16 @@ async def remove_bg(file: UploadFile = File(None), image_url: str = Form(None)):
             return JSONResponse({"error": "No image provided"}, status_code=400)
 
         result = remove(input_bytes)
-
         output_path = "/tmp/output.png"
         with open(output_path, "wb") as f:
             f.write(result)
-
         return FileResponse(output_path, media_type="image/png", filename="output.png")
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
+
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8000))  # Railway auto-sets this variable
     uvicorn.run(app, host="0.0.0.0", port=port)
